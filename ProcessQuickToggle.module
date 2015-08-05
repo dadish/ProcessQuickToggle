@@ -22,9 +22,8 @@ class ProcessQuickToggle extends Process implements Module {
   {
     return array(
       'title' => 'Process Quick Toggle',
-      'version' => 001,
+      'version' => '0.1.0',
       'summary' => _('Quickly toggle your checkboxes with extra action buttons via AJAX.'),
-      'icon' => 'smile-o',
       'requires' => array('ProcessPageList', 'InputfieldCheckbox', 'ProcessWire>=2.6.5'),
       'autoload' => 'process=ProcessPageList|ProcessField',
       );
@@ -89,7 +88,8 @@ class ProcessQuickToggle extends Process implements Module {
     $field = $this->modules->get('InputfieldText');
     $field->name = 'button_enable';
     $field->label = $this->_('Button Enable Text');
-    $field->description = $this->_("The text for the action buton, to enable. \nE.g. `check`");
+    $field->description = $this->_("The text for the action button, to enable. \nE.g. `check`");
+    $field->notes = $this->_('If you want an icon instead of a text, prefix it with "`icon-`". E.g: `icon-chain`');
     $field->attr('value', $this->field->button_enable);
     $field->showIf = "enable_quick_toggle=1";
     $field->columnWidth = 50;
@@ -98,7 +98,8 @@ class ProcessQuickToggle extends Process implements Module {
     $field = $this->modules->get('InputfieldText');
     $field->name = 'button_disable';
     $field->label = $this->_('Button Disable Text');
-    $field->description = $this->_("The text for the action buton, to disable. \nE.g. `uncheck`");
+    $field->description = $this->_("The text for the action button, to disable. \nE.g. `uncheck`");
+    $field->notes = $this->_('If you want an icon instead of a text, prefix it with "`icon-`". E.g: `icon-chain-broken`');
     $field->attr('value', $this->field->button_disable);
     $field->showIf = "enable_quick_toggle=1";
     $field->columnWidth = 50;
@@ -107,7 +108,7 @@ class ProcessQuickToggle extends Process implements Module {
     $field = $this->modules->get('InputfieldText');
     $field->name = 'button_enabled';
     $field->label = $this->_('Button Enabled Text');
-    $field->description = $this->_("The little message text that appears after the action, when enabled. \nE.g. `Checked`");
+    $field->description = $this->_("The little message text that appears after the enable action. \nE.g. `Checked`");
     $field->attr('value', $this->field->button_enabled);
     $field->showIf = "enable_quick_toggle=1";
     $field->columnWidth = 50;
@@ -116,7 +117,7 @@ class ProcessQuickToggle extends Process implements Module {
     $field = $this->modules->get('InputfieldText');
     $field->name = 'button_disabled';
     $field->label = $this->_('Button Disabled Text');
-    $field->description = $this->_("The little message text that appears after the action, when disabled. \nE.g. `Unchecked`");
+    $field->description = $this->_("The little message text that appears after the disable action. \nE.g. `Unchecked`");
     $field->attr('value', $this->field->button_disabled);
     $field->showIf = "enable_quick_toggle=1";
     $field->columnWidth = 50;
@@ -165,10 +166,17 @@ class ProcessQuickToggle extends Process implements Module {
     $defaults = $this->getDefaultData();
     $labels = array();
     foreach ($defaults as $key => $value) {
-      if ($field->$key) $labels[$key] = $field->$key;
+      if ($field->$key) $labels[$key] = $this->formatLabel($field->$key);
       else $labels[$key] = $value;
     }
     return $labels;
+  }
+
+  protected function formatLabel($label)
+  {
+    // If the string starts with `icon-` then it should be FontAwesome icon
+    if (strpos($label, 'icon-') === false) return $label;
+    else return wireIconMarkup($label);
   }
 
   public function hookProcesAction(HookEvent $event)
