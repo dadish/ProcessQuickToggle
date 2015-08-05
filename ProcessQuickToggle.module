@@ -1,0 +1,236 @@
+<?php
+
+/**
+ * ProcessQuickToggle
+ *
+ * Quickly toggle your checkboxes with extra action buttons via AJAX.
+ * 
+ * @todo FieldtypeCheckbox does not necessarily have 1 or 0 value. It could be
+ *       configured to have other values. Try to set values according to those 
+ *       settings.
+ *
+ */
+
+class ProcessQuickToggle extends Process implements Module {
+
+  const quickToggleCheck = 'quickToggleCheck';
+  const quickToggleUncheck = 'quickToggleUncheck';
+
+  protected $field = null;
+
+  public static function getModuleInfo()
+  {
+    return array(
+      'title' => 'Process Quick Toggle',
+      'version' => 001,
+      'summary' => _('Quickly toggle your checkboxes with extra action buttons via AJAX.'),
+      'icon' => 'smile-o',
+      'requires' => array('ProcessPageList', 'InputfieldCheckbox', 'ProcessWire>=2.6.5'),
+      'autoload' => 'process=ProcessPageList|ProcessField',
+      );
+  }
+
+  public function init()
+  {
+    $this->addHookBefore('ProcessField::executeEdit', $this, 'hookExecuteEdit');
+    $this->addHookAfter('Inputfield::getConfigAllowContext', $this, 'hookConfigAllowContext');
+    $this->addHookAfter('InputfieldCheckbox::getConfigInputfields', $this, 'hookConfigInputfields');
+    $this->addHookAfter('ProcessPageListActions::getExtraActions', $this, 'hookExtraActions');
+    $this->addHookAfter('ProcessPageListActions::processAction', $this, 'hookProcesAction');
+  }
+
+  public function getDefaultData()
+  {
+    return array(
+      'enable_quick_toggle' => 0,
+      'button_enable' => 'check',
+      'button_disable' => 'uncheck',
+      'button_enabled' => 'Checked',
+      'button_disabled' => 'Unchecked'
+      );
+  }
+
+  protected function hookExecuteEdit(HookEvent $event)
+  {
+    $id = (integer) $this->input->get->id;
+    $fieldgroup_id = (integer) $this->input->get->fieldgroup_id;
+    if ($fieldgroup_id) $fieldgroup = wire('fieldgroups')->get($fieldgroup_id);
+
+    if ($fieldgroup_id && $fieldgroup instanceof FieldGroup) {
+      $this->field = $fieldgroup->getField($id, true);
+      $this->message('We got it form context!');
+    } else {
+      $this->field = wire('fields')->get($id);
+    }
+  }
+
+  protected function hookConfigAllowContext(HookEvent $event)
+  {
+    $allowed = $event->return;
+    if (!isset($allowed['enable_quick_toggle'])) $allowed[] = 'enable_quick_toggle';
+    if (!isset($allowed['button_enable'])) $allowed[] = 'button_enable';
+    if (!isset($allowed['button_disable'])) $allowed[] = 'button_disable';
+    if (!isset($allowed['button_enabled'])) $allowed[] = 'button_enabled';
+    if (!isset($allowed['button_disabled'])) $allowed[] = 'button_disabled';
+    $event->return = $allowed;
+  }
+
+  protected function hookConfigInputfields(HookEvent $event)
+  {
+
+    $fields = $event->return;
+
+    $field = $this->modules->get('InputfieldCheckbox');
+    $field->name = 'enable_quick_toggle';
+    $field->label = $this->_('Enable Quick Toggle');
+    if ($this->field->enable_quick_toggle) $field->attr('checked', 1);
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldText');
+    $field->name = 'button_enable';
+    $field->label = $this->_('Button Enable Text');
+    $field->description = $this->_("The text for the action buton, to enable. \nE.g. `check`");
+    $field->attr('value', $this->field->button_enable);
+    $field->showIf = "enable_quick_toggle=1";
+    $field->columnWidth = 50;
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldText');
+    $field->name = 'button_disable';
+    $field->label = $this->_('Button Disable Text');
+    $field->description = $this->_("The text for the action buton, to disable. \nE.g. `uncheck`");
+    $field->attr('value', $this->field->button_disable);
+    $field->showIf = "enable_quick_toggle=1";
+    $field->columnWidth = 50;
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldText');
+    $field->name = 'button_enabled';
+    $field->label = $this->_('Button Enabled Text');
+    $field->description = $this->_("The little message text that appears after the action, when enabled. \nE.g. `Checked`");
+    $field->attr('value', $this->field->button_enabled);
+    $field->showIf = "enable_quick_toggle=1";
+    $field->columnWidth = 50;
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldText');
+    $field->name = 'button_disabled';
+    $field->label = $this->_('Button Disabled Text');
+    $field->description = $this->_("The little message text that appears after the action, when disabled. \nE.g. `Unchecked`");
+    $field->attr('value', $this->field->button_disabled);
+    $field->showIf = "enable_quick_toggle=1";
+    $field->columnWidth = 50;
+    $fields->add($field);
+
+    $event->return = $fields;
+  }
+
+  protected function hookExtraActions(HookEvent $event)
+  {
+    $page = $event->arguments[0];
+    $extras = $event->return;
+    $adminUrl = $this->wire('config')->urls->admin . 'page/';
+
+    foreach ($page->fields as $field) {
+      $field = $page->fields->getField($field->id, true);
+      if (!$field->enable_quick_toggle) continue;
+
+      $labels = $this->getLabels($field);
+
+      if ($page->get($field->name)) {
+        $action = self::quickToggleUncheck;
+        $extras['quickToggleUncheck_' . $field->name] = array(
+          'cn'   => 'Disable',
+          'name' => $labels['button_disable'],
+          'url'  => "$adminUrl?action=$action&id=$page->id&fieldId=$field->id",
+          'ajax' => true,
+        );
+
+      } else {
+        $action = self::quickToggleCheck;
+        $extras['quickToggleCheck_' . $field->name] = array(
+          'cn'   => 'Enable',
+          'name' => $labels['button_enable'],
+          'url'  => "$adminUrl?action=$action&id=$page->id&fieldId=$field->id",
+          'ajax' => true,
+        );
+      }
+    }
+
+    $event->return = $extras;
+  }
+
+  protected function getLabels($field)
+  {
+    $defaults = $this->getDefaultData();
+    $labels = array();
+    foreach ($defaults as $key => $value) {
+      if ($field->$key) $labels[$key] = $field->$key;
+      else $labels[$key] = $value;
+    }
+    return $labels;
+  }
+
+  public function hookProcesAction(HookEvent $event)
+  {
+    $page = $event->arguments[0];
+    $action = $event->arguments[1];
+
+    $result = array(
+      'action' => $action,
+      'success' => false,
+      'message' => 'noob',
+      'updateItem' => $page->id,
+      'remove' => false, 
+      'refreshChildren' => 0
+    );
+
+    // If the action is not the one we care about then return
+    if ($action !== self::quickToggleCheck AND $action !== self::quickToggleUncheck) return;
+
+    // If the fieldId is not present then...
+    $fieldId = (integer) $this->input->get->fieldId;
+    if (!$fieldId) {
+      $result['message'] = $this->_("The fieldId is unknown.");
+      $event->return = $result;
+      return;
+    }
+
+    // If the field cannot be retrieved then...
+    $field = $page->fields->get($fieldId);
+    $field = $page->fields->getField($field->name, true);
+    if (!$field) {
+      $result['message'] = $this->_("The field with id: `$fieldId` couldn't be retrieved.");
+      $event->return = $result;
+      return;
+    }
+    
+    // Check for permissions
+    if (!$page->editable($field->name) && !wire('user')->isSuperuser()) {
+      $result['message'] = $this->_("You haven't got permissions for this action.");
+      $event->return = $result;
+      return;
+    }
+
+    // Prepare default value and message
+    $labels = $this->getLabels($field);
+    if ($action === self::quickToggleCheck) {
+      $value = 1;
+      $message = $labels['button_enabled'];
+    } else {
+      $value = 0;
+      $message = $labels['button_disabled'];
+    }
+
+    try {
+      $result['success'] = $page->setAndSave($field->name, $value);
+      if ($result['success']) $result['message'] = $message;
+      else $result['message'] = $this->_("Something went wrong. We could not perform the task.");
+    } catch (Exception $e) {
+      $result['message'] = $e->getMessage();
+    }
+
+    $event->return = $result;
+  }
+
+}
