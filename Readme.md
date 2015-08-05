@@ -3,24 +3,24 @@ ProcessQuickToggle
 
 Quickly toggle your checkboxes with extra action buttons via AJAX.
 
-The module adds options into InputfieldCheckbox so you can toggle the checkbox
+The module adds functionality to InputfieldCheckbox so you can toggle the checkbox
 fields in the extra action buttons intruduced in [ProcessWire 2.6.5][pw-2-6-5] via AJAX.
 
 ## Requirements
 This module works only for ProcessWire versions later than 2.6.5.
 
 ## How to Install
-1. Copy all the files in this directory to /site/modules/ProcessQuickToggle/ 
+1. Copy the files in this directory to /site/modules/ProcessQuickToggle/ 
 
 2. In your admin, go to Modules > Refresh for new modules. 
 
 3. Click the "Install" button next to Process Quick Toggle.
 
 ## Usage
-Go to any checkbox field you want to enable quick toggle feature.
-_Setup > Fields > my_checkbox_field_
-There in the `Input` tab you should see an _Enable Quick Toggle_ field. 
-After you check it you will see the fields that you need to fill. 
+Go to any checkbox field you want to enable quick toggle feature
+_Setup > Fields > my_checkbox_field_. There in the `Input` tab you should see an
+_Enable Quick Toggle_ field. After you check it you will see some fields that you
+can fill based on your needs.
 
 ![ProcessQuickToggle Settings](imgs/settings.png "ProcessQuickToggle Settings")
 
