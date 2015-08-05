@@ -7,6 +7,9 @@ The module adds options into InputfieldCheckbox so you can toggle the checkbox
 fields in the extra action buttons intruduced in [ProcessWire 2.6.5][pw-2-6-5]
 via AJAX.
 
+## Requirements
+This module works only for ProcessWire versions later than 2.6.5.
+
 ## How to Install
 1. Copy all the files in this directory to /site/modules/Babel/ 
 
