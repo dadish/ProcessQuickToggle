@@ -22,7 +22,7 @@ class ProcessQuickToggle extends Process implements Module {
   {
     return array(
       'title' => 'Process Quick Toggle',
-      'version' => '0.1.0',
+      'version' => '0.1.1',
       'summary' => _('Quickly toggle your checkboxes with extra action buttons via AJAX.'),
       'requires' => array('ProcessPageList', 'InputfieldCheckbox', 'ProcessWire>=2.6.5'),
       'autoload' => 'process=ProcessPageList|ProcessField',
