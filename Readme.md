@@ -17,7 +17,7 @@ This module works only for ProcessWire versions later than 2.6.5.
 3. Click the "Install" button next to Process Quick Toggle.
 
 ## Usage
-Go to any checkbox field you want to enable quick toggle feature
+Go to any checkbox field you want to enable quick toggle feature for
 _Setup > Fields > my_checkbox_field_. There in the `Input` tab you should see an
 _Enable Quick Toggle_ field. After you check it you will see some fields that you
 can fill based on your needs.
